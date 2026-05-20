@@ -3,11 +3,12 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once '../../db/db.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student') {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit;
 }
 
-$student_id = $_SESSION['user_id'];
+$student_id = (int)$_SESSION['user_id'];
+
 $query = "
     SELECT
         c.id AS course_id,
@@ -51,154 +52,157 @@ foreach ($rows as $row) {
             'description' => $row['description'],
             'assignments' => [],
             'accepted_count' => 0,
-            'next_assignment_id' => 0,
+            'resume_assignment_id' => 0,
             'completed' => false,
+            'grades_sum' => 0,
+            'grades_n' => 0,
         ];
     }
     $courses[$courseId]['assignments'][] = $row;
 }
 
-foreach ($courses as &$course) {
+$resumeStmt = $db->prepare("
+    SELECT a.id
+    FROM assignments a
+    LEFT JOIN (
+        SELECT ranked.assignment_id, ranked.student_id, ranked.status
+        FROM (
+            SELECT
+                s.assignment_id,
+                s.student_id,
+                s.status,
+                ROW_NUMBER() OVER (
+                    PARTITION BY s.assignment_id, s.student_id
+                    ORDER BY s.attempt_number DESC, s.id DESC
+                ) AS rn
+            FROM submissions s
+        ) ranked
+        WHERE ranked.rn = 1
+    ) ls ON ls.assignment_id = a.id AND ls.student_id = ?
+    WHERE a.course_id = ?
+      AND (ls.status IS NULL OR ls.status <> 'accepted')
+    ORDER BY a.id ASC
+    LIMIT 1
+");
+
+$lastLessonStmt = $db->prepare("
+    SELECT id FROM assignments WHERE course_id = ? ORDER BY id DESC LIMIT 1
+");
+
+foreach ($courses as $cid => &$course) {
+    $n = count($course['assignments']);
     foreach ($course['assignments'] as $assignment) {
         if (($assignment['status'] ?? '') === 'accepted') {
             $course['accepted_count']++;
-        } elseif ($course['next_assignment_id'] === 0) {
-            $course['next_assignment_id'] = (int)$assignment['assignment_id'];
+        }
+        if ($assignment['grade'] !== null && $assignment['grade'] !== '') {
+            $course['grades_sum'] += (int)$assignment['grade'];
+            $course['grades_n']++;
         }
     }
-    if ($course['next_assignment_id'] === 0 && !empty($course['assignments'])) {
-        $course['completed'] = true;
+    $course['completed'] = $n > 0 && $course['accepted_count'] >= $n;
+
+    $resumeStmt->execute([$student_id, $cid]);
+    $resumeId = (int)$resumeStmt->fetchColumn();
+    if ($resumeId <= 0 && $n > 0) {
+        $lastLessonStmt->execute([$cid]);
+        $resumeId = (int)$lastLessonStmt->fetchColumn();
     }
+    $course['resume_assignment_id'] = $resumeId;
 }
 unset($course);
 
 include '../../includes/header.php';
 ?>
 
-<style>
-.box {
-    border-radius: 12px !important;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-    border: none;
-}
-
-.admin-header {
-    margin-bottom: 2rem;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 1rem;
-}
-
-.table thead th {
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-}
-
-.course-divider {
-    background-color: #f8fafc;
-    font-weight: bold;
-    color: #475569;
-}
-
-.avg-badge {
-    background: var(--primary-blue);
-    color: #fff;
-    padding: 0.2rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-}
-.progress-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-}
-.lesson-pill {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.7rem 0.85rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    background: #fff;
-    margin-bottom: 0.6rem;
-}
-</style>
-
-<section class="section">
+<section class="section student-grades-page">
     <div class="container">
         <div class="columns">
-
             <div class="column is-3">
                 <?php include 'sidebar_student.php'; ?>
             </div>
-
             <div class="column">
                 <div class="box panel-card">
                     <div class="panel-heading">
                         <h1 class="title is-4">Результаты обучения</h1>
-                        <p class="is-size-6 has-text-grey">Прогресс по модулям, принятые задания и доступ к следующему шагу.</p>
+                        <p class="is-size-6 has-text-grey">Статусы заданий и баллы совпадают с журналом преподавателя.</p>
                     </div>
 
                     <?php if (empty($courses)): ?>
-                        <div class="has-text-centered py-6 has-text-grey">У вас пока нет доступных модулей.</div>
+                        <div class="has-text-centered py-6 has-text-grey">У вас пока нет зачисленных программ.</div>
                     <?php else: ?>
-                        <div class="progress-grid">
+                        <div class="student-grades-grid">
                             <?php foreach ($courses as $course): ?>
-                                <article class="box">
-                                    <h2 class="title is-5 mb-2"><?= htmlspecialchars($course['course_name']) ?></h2>
-                                    <p class="has-text-grey is-size-7 mb-3">
-                                        Принято заданий: <strong><?= $course['accepted_count'] ?></strong> из <strong><?= count($course['assignments']) ?></strong>
-                                    </p>
+                                <?php
+                                $avg = $course['grades_n'] > 0
+                                    ? round($course['grades_sum'] / $course['grades_n'], 1)
+                                    : null;
+                                ?>
+                                <article class="box student-grades-course-card">
+                                    <div class="student-grades-course-head">
+                                        <h2 class="title is-5 mb-1"><?= htmlspecialchars($course['course_name']) ?></h2>
+                                        <div class="student-grades-meta is-size-7">
+                                            <span>Принято: <strong><?= (int)$course['accepted_count'] ?></strong> / <?= count($course['assignments']) ?></span>
+                                            <?php if ($avg !== null): ?>
+                                                <span class="student-grades-avg">Средний балл: <strong><?= htmlspecialchars((string)$avg) ?></strong></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
                                     <?php if ($course['completed']): ?>
-                                        <div class="notification is-success is-light">Модуль завершен. Все задания приняты.</div>
-                                    <?php elseif ($course['next_assignment_id'] > 0): ?>
-                                        <div class="notification is-link is-light">
-                                            Следующее доступное задание:
-                                            <a href="student_tasks.php?course_id=<?= (int)$course['course_id'] ?>&assignment_id=<?= (int)$course['next_assignment_id'] ?>">открыть шаг</a>
+                                        <div class="notification is-success is-light is-size-7 mb-3">Все задания приняты.</div>
+                                    <?php elseif ($course['resume_assignment_id'] > 0): ?>
+                                        <div class="notification is-link is-light is-size-7 mb-3">
+                                            <a href="student_tasks.php?course_id=<?= (int)$course['course_id'] ?>&assignment_id=<?= (int)$course['resume_assignment_id'] ?>">Перейти к текущему заданию</a>
                                         </div>
                                     <?php endif; ?>
 
-                                    <?php foreach ($course['assignments'] as $assignment): ?>
-                                        <?php
-                                        $status = $assignment['status'] ?? '';
-                                        $icon = '🔒';
-                                        $label = 'Заблокировано';
-                                        if ($status === 'accepted') {
-                                            $icon = '✅';
-                                            $label = 'Принято';
-                                        } elseif ($status === 'revision') {
-                                            $icon = '❌';
-                                            $label = 'На доработке';
-                                        } elseif ($status === 'on_review' || $status === 'review' || $status === 'submitted') {
-                                            $icon = '⏳';
-                                            $label = 'На проверке';
-                                        } elseif ((int)$assignment['assignment_id'] === (int)$course['next_assignment_id']) {
-                                            $icon = '▶';
-                                            $label = 'Доступно';
-                                        }
-                                        ?>
-                                        <div class="lesson-pill">
-                                            <div>
-                                                <div><strong><?= htmlspecialchars($assignment['assignment_title']) ?></strong></div>
-                                                <div class="is-size-7 has-text-grey"><?= $label ?></div>
-                                            </div>
-                                            <div class="has-text-right">
-                                                <div><?= $icon ?></div>
-                                                <?php if ($assignment['grade'] !== null): ?>
-                                                    <div class="is-size-7 has-text-grey">Оценка: <?= (int)$assignment['grade'] ?></div>
+                                    <ul class="student-grades-list">
+                                        <?php foreach ($course['assignments'] as $assignment): ?>
+                                            <?php
+                                            $aid = (int)$assignment['assignment_id'];
+                                            $status = (string)($assignment['status'] ?? '');
+                                            $resumeId = (int)$course['resume_assignment_id'];
+                                            $tagClass = 'is-light';
+                                            $label = 'Не начато';
+                                            if ($status === 'accepted') {
+                                                $tagClass = 'is-success';
+                                                $label = 'Принято';
+                                            } elseif ($status === 'revision') {
+                                                $tagClass = 'is-danger';
+                                                $label = 'На доработке';
+                                            } elseif ($status === 'on_review' || $status === 'review' || $status === 'submitted') {
+                                                $tagClass = 'is-warning';
+                                                $label = 'На проверке';
+                                            } elseif ($aid === $resumeId && !$course['completed']) {
+                                                $tagClass = 'is-info';
+                                                $label = 'Открыто для сдачи';
+                                            } elseif ($status === '') {
+                                                $tagClass = 'is-light';
+                                                $label = 'Ожидает очереди';
+                                            }
+                                            $g = $assignment['grade'];
+                                            $hasGrade = $g !== null && $g !== '';
+                                            ?>
+                                            <li class="student-grades-row">
+                                                <div class="student-grades-row-main">
+                                                    <span class="student-grades-title"><?= htmlspecialchars($assignment['assignment_title']) ?></span>
+                                                    <span class="tag <?= $tagClass ?>"><?= htmlspecialchars($label) ?></span>
+                                                </div>
+                                                <?php if ($hasGrade): ?>
+                                                    <span class="student-grades-ball"><?= (int)$g ?></span>
+                                                <?php else: ?>
+                                                    <span class="student-grades-ball is-muted">—</span>
                                                 <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
                                 </article>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
                 </div>
             </div>
-
         </div>
     </div>
 </section>

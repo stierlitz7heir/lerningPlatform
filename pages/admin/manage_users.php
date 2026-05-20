@@ -69,7 +69,10 @@ if (isset($_GET['action'])) {
                     $stmt->execute([$full_name, $login, $role, $group_id, $id]);
                 }
             } else {
-                if (empty($password)) $password = '123456'; // дефолтный пароль для новых
+                if ($password === '') {
+                    echo json_encode(['success' => false, 'message' => 'Укажите пароль для нового пользователя']);
+                    exit;
+                }
                 $hash = password_hash($password, PASSWORD_BCRYPT);
                 $stmt = $db->prepare("INSERT INTO users (full_name, login, role, group_id, password_hash) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$full_name, $login, $role, $group_id, $hash]);
@@ -136,7 +139,7 @@ include '../../includes/header.php';
                                 <div class="select">
                                     <select name="role">
                                         <option value="">Все роли</option>
-                                        <option value="student" <?= $roleFilter === 'student' ? 'selected' : '' ?>>Слушатели</option>
+                                        <option value="student" <?= $roleFilter === 'student' ? 'selected' : '' ?>>Студенты</option>
                                         <option value="teacher" <?= $roleFilter === 'teacher' ? 'selected' : '' ?>>Преподаватели</option>
                                         <option value="admin" <?= $roleFilter === 'admin' ? 'selected' : '' ?>>Операторы</option>
                                     </select>
@@ -164,7 +167,11 @@ include '../../includes/header.php';
                                 <td><code><?= htmlspecialchars($u['login']) ?></code></td>
                                 <td>
                                     <span class="tag <?= $u['role']==='admin'?'is-danger':($u['role']==='teacher'?'is-warning':'is-light') ?>">
-                                        <?= ucfirst($u['role']) ?>
+                                        <?= htmlspecialchars([
+                                            'student' => 'Студент',
+                                            'teacher' => 'Преподаватель',
+                                            'admin' => 'Оператор ДПО',
+                                        ][$u['role']] ?? $u['role']) ?>
                                     </span>
                                 </td>
                                 <td class="has-text-right">
@@ -205,14 +212,14 @@ include '../../includes/header.php';
                 <input class="input" type="text" id="login" required>
             </div>
             <div class="field">
-                <label class="label">Пароль <small>(оставьте пустым при редактировании)</small></label>
-                <input class="input" type="password" id="password">
+                <label class="label">Пароль <small id="passwordHint">(обязателен для нового пользователя; при редактировании оставьте пустым, чтобы не менять)</small></label>
+                <input class="input" type="password" id="password" autocomplete="new-password">
             </div>
             <div class="field">
                 <label class="label">Роль</label>
                 <div class="select is-fullwidth">
                     <select id="role">
-                        <option value="student">Слушатель</option>
+                        <option value="student">Студент</option>
                         <option value="teacher">Преподаватель</option>
                         <option value="admin">Оператор ДПО</option>
                     </select>
@@ -234,6 +241,8 @@ function openUserModal() {
     document.getElementById('full_name').value = '';
     document.getElementById('login').value = '';
     document.getElementById('password').value = '';
+    document.getElementById('password').required = true;
+    document.getElementById('passwordHint').textContent = '(обязателен для нового пользователя; при редактировании оставьте пустым, чтобы не менять)';
     document.getElementById('role').value = 'student';
     document.getElementById('userModal').classList.add('is-active');
 }
@@ -244,6 +253,8 @@ function editUser(user) {
     document.getElementById('full_name').value = user.full_name;
     document.getElementById('login').value = user.login;
     document.getElementById('password').value = '';
+    document.getElementById('password').required = false;
+    document.getElementById('passwordHint').textContent = '(оставьте пустым, чтобы не менять пароль)';
     document.getElementById('role').value = user.role;
     document.getElementById('userModal').classList.add('is-active');
 }
@@ -259,6 +270,10 @@ async function saveUser() {
 
     if (!data.login) {
         alert('Введите логин');
+        return;
+    }
+    if (!data.id && !data.password) {
+        alert('Укажите пароль для нового пользователя');
         return;
     }
 

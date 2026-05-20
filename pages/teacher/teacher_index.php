@@ -65,10 +65,10 @@ include '../../includes/header.php';
                             <hr>
                             <?php if ($studentsTotal > 0): ?>
                                 <p class="title is-3 mb-2"><?= $studentsTotal ?></p>
-                                <p class="has-text-grey">Активных слушателей по вашим дисциплинам</p>
+                                <p class="has-text-grey">Активных студентов по вашим дисциплинам</p>
                                 <a href="teacher_groups.php" class="button is-light mt-4">Открыть список</a>
                             <?php else: ?>
-                                <p class="has-text-grey">Пока нет активных слушателей</p>
+                                <p class="has-text-grey">Пока нет активных студентов</p>
                             <?php endif; ?>
                         </div>
                     </div>

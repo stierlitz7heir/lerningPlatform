@@ -535,35 +535,34 @@ include '../../includes/header.php';
                 <input type="hidden" id="modalStudentId" name="student_id" value="">
                 <input type="hidden" id="modalAssignmentId" name="assignment_id" value="">
                 <div class="field">
-                    <label class="label">Оценка статуса</label>
+                    <label class="label">Статус проверки</label>
                     <div class="select is-fullwidth">
-                        <select name="status" required>
+                        <select name="status" id="reviewStatusSelect" required>
                             <option value="on_review">На проверке</option>
                             <option value="revision">Вернуть на доработку</option>
-                            <option value="accepted">Принять</option>
+                            <option value="accepted">Принять работу</option>
                         </select>
                     </div>
+                    <p class="help">Один раз сохраняет статус, балл и комментарий к последней попытке.</p>
                 </div>
                 <div class="field">
-                    <label class="label">Оценка</label>
+                    <label class="label">Балл (2–5)</label>
                     <div class="select is-fullwidth">
                         <select name="grade">
-                            <option value="">Без оценки</option>
-                            <option value="5">5</option>
-                            <option value="4">4</option>
-                            <option value="3">3</option>
-                            <option value="2">2</option>
+                            <option value="">Не выставлять</option>
+                            <option value="5">5 — отлично</option>
+                            <option value="4">4 — хорошо</option>
+                            <option value="3">3 — удовлетворительно</option>
+                            <option value="2">2 — неудовлетворительно</option>
                         </select>
                     </div>
                 </div>
                 <div class="field">
                     <label class="label">Комментарий преподавателя</label>
-                    <textarea class="textarea" name="teacher_comment" rows="4" placeholder="Укажите критерии, замечания и рекомендации"></textarea>
+                    <textarea class="textarea" name="teacher_comment" rows="4" placeholder="Критерии, замечания, что исправить"></textarea>
                 </div>
                 <div class="buttons is-right ws-action-buttons">
-                    <button type="submit" class="button is-success" name="status" value="accepted">Принять</button>
-                    <button type="submit" class="button is-warning" name="status" value="revision">Вернуть</button>
-                    <button type="submit" class="button is-light" name="status" value="on_review">Оставить на проверке</button>
+                    <button type="submit" class="button is-link">Сохранить проверку</button>
                 </div>
             </form>
         </section>
@@ -721,9 +720,17 @@ function renderHistoryItem(item) {
     const textContent = item.text_content ? item.text_content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') : '—';
     const feedback = item.teacher_comment ? item.teacher_comment.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') : '';
     const fileLink = item.file_path ? `<a href="../../${item.file_path}" target="_blank">Открыть файл</a>` : '—';
+    const statusRu = {
+        on_review: 'На проверке',
+        review: 'На проверке',
+        submitted: 'Отправлено',
+        revision: 'На доработке',
+        accepted: 'Принято',
+    };
+    const st = statusRu[item.status] || item.status || '—';
     return `
         <div class="ws-history-card">
-            <p><strong>Попытка #${item.attempt_number}</strong> · Статус: <strong>${item.status}</strong></p>
+            <p><strong>Попытка #${item.attempt_number}</strong> · Статус: <strong>${st}</strong></p>
             <p class="is-size-7 has-text-grey mb-2">${submittedAt}</p>
             <div class="ws-history-user">
                 <p><strong>Ответ студента</strong></p>

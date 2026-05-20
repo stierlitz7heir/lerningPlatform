@@ -115,7 +115,7 @@ include '../../includes/header.php';
                 <div class="box">
                     <div class="level mb-5">
                         <div class="level-left">
-                            <h1 class="title is-4">Заявки слушателей ДПО</h1>
+                            <h1 class="title is-4">Заявки студентов ДПО</h1>
                         </div>
                         <div class="level-right">
                             <span class="tag is-info">

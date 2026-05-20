@@ -5,7 +5,7 @@ $sidebarCurrentAssignmentId = (int)($sidebar_current_assignment_id ?? 0);
 $sidebarCourseId = (int)($sidebar_course_id ?? 0);
 ?>
 <aside class="menu box">
-    <p class="menu-label">Кабинет слушателя ДПО</p>
+    <p class="menu-label">Кабинет студента ДПО</p>
     <ul class="menu-list">
         <li>
             <a href="student.php" class="<?= $current_page === 'student.php' ? 'is-active' : '' ?>">

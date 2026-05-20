@@ -102,6 +102,20 @@ include '../includes/header.php';
     .sch-actions { display: flex; gap: 10px; }
     .btn-save { background: #4a69bd; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     .btn-add { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .btn-back {
+        background: #fff;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .btn-back:hover { background: #f8fafc; }
     
     .table-scroll { border: 1px solid #e2e8f0; border-radius: 8px; overflow-x: auto; background: #fff; }
     .sch-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1500px; }
@@ -135,6 +149,7 @@ include '../includes/header.php';
             <h1 class="title is-4">Расписание</h1>
             <div class="sch-actions">
                 <?php if ($isAdmin): ?>
+                    <a href="/pages/admin/admin.php" class="btn-back"><i class="fas fa-arrow-left"></i> В меню</a>
                     <button type="button" onclick="submitAction('add_spec')" class="btn-add">+ Группа</button>
                     <button type="button" onclick="submitAction('save')" class="btn-save">Сохранить</button>
                 <?php endif; ?>

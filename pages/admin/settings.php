@@ -85,7 +85,11 @@ include '../../includes/header.php';
                             <label class="label">Роль</label>
                             <div class="control">
                                 <input class="input is-static" type="text" 
-                                       value="<?= ucfirst($user['role'] ?? '') ?>" readonly>
+                                       value="<?= htmlspecialchars([
+                                           'student' => 'Студент',
+                                           'teacher' => 'Преподаватель',
+                                           'admin' => 'Оператор ДПО',
+                                       ][$user['role'] ?? ''] ?? ($user['role'] ?? '')) ?>" readonly>
                             </div>
                         </div>
 

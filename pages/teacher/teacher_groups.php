@@ -100,7 +100,7 @@ include '../../includes/header.php';
                         <hr>
                         <h2 class="title is-5 mb-3">Список студентов</h2>
                         <?php if (empty($students)): ?>
-                            <div class="notification is-light">По выбранной дисциплине пока нет активных слушателей.</div>
+                            <div class="notification is-light">По выбранной дисциплине пока нет активных студентов.</div>
                         <?php else: ?>
                             <table class="table is-fullwidth is-hoverable">
                                 <thead>

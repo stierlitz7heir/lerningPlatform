@@ -37,7 +37,10 @@ try {
         }
     } else {
         // Создание нового
-        if (empty($password)) $password = '123456'; // дефолтный пароль
+        if ($password === '') {
+            echo json_encode(['success' => false, 'message' => 'Укажите пароль для нового пользователя']);
+            exit;
+        }
         $hash = password_hash($password, PASSWORD_BCRYPT);
         $stmt = $db->prepare("INSERT INTO users (full_name, login, role, group_id, password_hash) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$full_name, $login, $role, $group_id, $hash]);

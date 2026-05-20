@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3307
--- Время создания: Апр 28 2026 г., 10:21
+-- Время создания: Май 14 2026 г., 22:00
 -- Версия сервера: 8.0.30
 -- Версия PHP: 8.1.9
 
@@ -281,7 +281,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `login`, `password_hash`, `role`, `full_name`, `group_name`, `group_id`, `remember_token`) VALUES
 (1, 'admin', '$2a$12$eK8AKrHAGchz12UhgnCwweFNlSVEfs6UfmpzD/4u2UBm0xVr6..Le', 'admin', 'Администратор платформы', NULL, NULL, '4e0715d13700b6d26ca06061d3559d1361d5971e9074cc10142e05de06f794cc'),
-(2, 'stierlitz7heir', '$2y$10$SJ.C97qnNvJQls2dtW46duOtfoK.5K6k68cDbsuf0S3LTcmZXeqkK', 'student', 'Кооль Валерий Павлович', 'ИС-414/22', 6, NULL),
+(2, 'stierlitz7heir', '$2y$10$SJ.C97qnNvJQls2dtW46duOtfoK.5K6k68cDbsuf0S3LTcmZXeqkK', 'student', 'Кооль Валерий Павлович', 'ИС-414/22', 6, 'd5072809ed2a808283726be1c0be5dd68125e7beafefa6b65270c8a43d1396e8'),
 (3, 'denlym', '$2y$10$D/utQTzU2HEfeiPjYSD4Rup0l1VxBKEw3eqxgZ/NBAEU0T.oKi332', 'teacher', 'Тугушев Денислям Умярович', NULL, NULL, '766d05786387e8d10a28c8b551b35875322576ff4d3080cf7cdb52c57b4ab510');
 
 --

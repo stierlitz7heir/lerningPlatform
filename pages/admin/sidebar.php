@@ -29,7 +29,7 @@ $current = basename($_SERVER['PHP_SELF']);
         <li>
             <a href="/pages/admin/manage_requests.php" class="<?= $current === 'manage_requests.php' ? 'is-active' : '' ?>">
                 <span class="icon"><i class="fas fa-user-check"></i></span>
-                <span>Заявки слушателей</span>
+                <span>Заявки студентов</span>
             </a>
         </li>
     </ul>
@@ -39,7 +39,7 @@ $current = basename($_SERVER['PHP_SELF']);
         <li>
             <a href="/pages/admin/manage_users.php" class="<?= $current === 'manage_users.php' ? 'is-active' : '' ?>">
                 <span class="icon"><i class="fas fa-users"></i></span>
-                <span>Слушатели и сотрудники</span>
+                <span>Студенты и сотрудники</span>
             </a>
         </li>
     </ul>

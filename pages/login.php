@@ -28,9 +28,9 @@
                     <form method="POST" action="functions/login_process.php" id="login-form">
 
                         <div class="field">
-                            <label class="label is-size-7-mobile">Логин или Email</label>
+                            <label class="label is-size-7-mobile">Логин</label>
                             <div class="control has-icons-left">
-                                <input class="input is-medium" type="text" name="login" placeholder="Введите логин или email" required autofocus>
+                                <input class="input is-medium" type="text" name="login" placeholder="Введите логин" required autofocus>
                                 <span class="icon is-left">
                                     <i class="fas fa-user"></i>
                                 </span>
